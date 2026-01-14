@@ -1,0 +1,56 @@
+name: Java CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: 1. Lint Code (Checkstyle)
+      run: ./gradlew checkstyleMain checkstyleTest
+
+    - name: 2. Build Application (Assemble)
+      run: ./gradlew assemble
+
+    - name: 3. Run Tests (Unit & Integration)
+      run: ./gradlew test
+
+    - name: 4. Verify Code Coverage (JaCoCo)
+      run: ./gradlew jacocoTestCoverageVerification
+
+    - name: Publish Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-reports
+        path: build/reports/tests/
+
+    - name: Publish Checkstyle Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: checkstyle-reports
+        path: build/reports/checkstyle/
+
+    - name: Publish Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: build/reports/jacoco/
